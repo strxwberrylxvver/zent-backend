@@ -1,0 +1,21 @@
+### Get all transactions
+GET http://localhost:5001/api/transactions
+Content-Type: application/json
+
+### Get a single transaction
+GET http://localhost:5001/api/transactions/8b1e19a2-d77d-4629-a1c4-b91d612cd10f
+
+### Get all transactions for a single user
+GET http://localhost:5001/api/users/020436e9-6b46-4255-91b9-971f989fc93b/transactions
+
+### Add a new transaction
+POST http://localhost:5001/api/users/transactions
+Content-Type: application/json
+
+{
+  "Name": "Groceries",
+  "Date": 29/03/2005
+  "Amount": 67.67,
+  "Category": "Snacks",
+  "PaymentMethod": "FaceCard"
+}
