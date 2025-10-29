@@ -22,6 +22,7 @@ const transactionsController = async (req, res) => {
     "Category",
     "PaymentMethod",
   ];
+
   const extendedTable = `${table} INNER JOIN users ON transactions.UserID=users.UserID`;
   const extendedFields = `${fields}, CONCAT(FirstName," ",LastName) AS UserName`;
   let sql = `SELECT ${extendedFields} FROM ${extendedTable}`;
@@ -88,8 +89,8 @@ const transactionsOfStudentController = async (req, res) => {
 
 //  Endpoints ------------------------------
 app.get("/api/transactions", transactionsController);
-app.get("/api/transactions/:id", transactionsController);
-app.get("/api/users/:id/transactions", transactionsOfStudentController);
+app.get("/api/:id/transactions", transactionsController);
+app.get("/api/transactions/users/:id", transactionsOfStudentController);
 
 //  Start server ---------------------------
 const PORT = process.env.PORT || 5001;
