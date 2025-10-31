@@ -1,12 +1,19 @@
 //  Imports --------------------------------
 import express from "express";
 import database from "./database.js";
-
+import cors from "cors";
 //  Configure express app ------------------
 const app = new express();
 
 //  Configure middleware -------------------
-
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+app.use(express.json());
 //  Controllers ----------------------------
 
 const transactionsController = async (req, res) => {
@@ -47,45 +54,42 @@ const transactionsController = async (req, res) => {
   isSuccess ? res.status(200).json(result) : res.status(400).json({ message });
 };
 
-
-
 const transactionsOfStudentController = async (req, res) => {
-    const id = req.params.id;
-    //BUILD SQL
-  
-    const table = "transactions";
-    const whereField = "transactions.UserID";
-    const fields = [
-      "TransactionID",
-      "Name",
-      "Date",
-      "Amount",
-      "Category",
-      "PaymentMethod",
-    ];
-    const extendedTable = `${table} INNER JOIN users ON transactions.UserID=users.UserID`;
-    const extendedFields = `${fields}, CONCAT(FirstName," ",LastName) AS UserName`;
-    const sql = `SELECT ${extendedFields} FROM ${extendedTable} WHERE ${whereField} = '${id}'`;
-  
-    // Execute query
-    let isSuccess = false;
-    let message = "";
-    let result = null;
-    try {
-      [result] = await database.query(sql);
-      if (result.length === 0) message = "No record(s) found.";
-      else {
-        isSuccess = true;
-        message = "Record(s) successfully recovered.";
-      }
-    } catch (error) {
-      message = `Failed to execute query: ${error.message}`;
-    }
-    // Responses
+  const id = req.params.id;
+  //BUILD SQL
 
-    isSuccess ? res.status(200).json(result) : res.status(400).json({ message });
-  };
-  
+  const table = "transactions";
+  const whereField = "transactions.UserID";
+  const fields = [
+    "TransactionID",
+    "Name",
+    "Date",
+    "Amount",
+    "Category",
+    "PaymentMethod",
+  ];
+  const extendedTable = `${table} INNER JOIN users ON transactions.UserID=users.UserID`;
+  const extendedFields = `${fields}, CONCAT(FirstName," ",LastName) AS UserName`;
+  const sql = `SELECT ${extendedFields} FROM ${extendedTable} WHERE ${whereField} = '${id}'`;
+
+  // Execute query
+  let isSuccess = false;
+  let message = "";
+  let result = null;
+  try {
+    [result] = await database.query(sql);
+    if (result.length === 0) message = "No record(s) found.";
+    else {
+      isSuccess = true;
+      message = "Record(s) successfully recovered.";
+    }
+  } catch (error) {
+    message = `Failed to execute query: ${error.message}`;
+  }
+  // Responses
+
+  isSuccess ? res.status(200).json(result) : res.status(400).json({ message });
+};
 
 //  Endpoints ------------------------------
 app.get("/api/transactions", transactionsController);
