@@ -14,6 +14,7 @@ app.use(
   })
 );
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 //  Controllers ----------------------------
 const read = async (selectSql) => {
@@ -35,11 +36,47 @@ const read = async (selectSql) => {
   }
 };
 
-const buildModulesSelectSQL = (id, variant) => {
+const create = async (sql) => {
+  try {
+    const status = await database.query(sql);
+    const recoverRecordSql = buildTransactionsSelectSQL(
+      status[0].insertId,
+      null
+    );
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? { isSuccess: true, result, message: "Record successfully recovered." }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover inserted record : ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+
+const buildTransactionsInsertSQL = (record) => {
+  let table = "transactions";
+  let mutablefields = ["Name", "Date", "Amount", "Category", "PaymentMethod"];
+  return `INSERT INTO ${table} SET 
+  Name="${record["Name"]}",
+  Date="${record["Date"]}",
+  Amount=${record["Amount"]},
+  Category="${record["Category"]}",
+  PaymentMethod="${record["PaymentMethod"]}"`;
+};
+
+const buildTransactionsSelectSQL = (id, variant) => {
   let sql = "";
-  const table =
+  let table =
     "transactions INNER JOIN users ON transactions.UserID=users.UserID";
-  const fields = [
+  let fields = [
     "TransactionID",
     "Name",
     "Date",
@@ -60,25 +97,33 @@ const buildModulesSelectSQL = (id, variant) => {
   return sql;
 };
 
-const getTransactionsController = async (req, res, variant) => {
-  const id = req.params.id;
-  const sql = buildModulesSelectSQL(id, variant);
-
-  const { isSuccess, result, message } = await read(sql);
-  if (!isSuccess) return res.status(404).json({ message });
+const getTransactionsController = async (res, id, variant) => {
+  const sql = buildTransactionsSelectSQL(id, variant);
+  const { isSuccess, result, message: accessorMessage } = await read(sql);
+  if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   res.status(200).json(result);
 };
 
+const postTransactionsController = async (req, res) => {
+  const sql = buildTransactionsInsertSQL(req.body);
+  const { isSuccess, result, message: accessorMessage } = await create(sql);
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+
+  res.status(201).json(result);
+};
+
 app.get("/api/transactions", (req, res) =>
-  getTransactionsController(req, res, null)
+  getTransactionsController(res, null, null)
 );
-app.get("/api/:id/transactions", (req, res) =>
-  getTransactionsController(req, res, null)
+app.get("/api/transactions/:id", (req, res) =>
+  getTransactionsController(res, req.params.id, null)
 );
 app.get("/api/transactions/users/:id", (req, res) =>
-  getTransactionsController(req, res, "user")
+  getTransactionsController(res, req.params.id, "user")
 );
+
+app.post("/api/transactions", postTransactionsController);
 
 //  Start server ---------------------------
 const PORT = process.env.PORT || 5001;
