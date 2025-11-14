@@ -14,13 +14,31 @@ app.use(
   })
 );
 app.use(express.json());
+
 //  Controllers ----------------------------
+const read = async (selectSql) => {
+  try {
+    const [result] = await database.query(selectSql);
+    return result.length === 0
+      ? { isSuccess: false, result: null, message: "No record(s) found." }
+      : {
+          isSuccess: true,
+          result,
+          message: "Record(s) successfully recovered.",
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
 
-const transactionsController = async (req, res) => {
-  const id = req.params.id;
-  //BUILD SQL
-  const table = "transactions";
-  const idField = "TransactionID";
+const buildModulesSelectSQL = (id, variant) => {
+  let sql = "";
+  const table =
+    "transactions INNER JOIN users ON transactions.UserID=users.UserID";
   const fields = [
     "TransactionID",
     "Name",
@@ -28,73 +46,39 @@ const transactionsController = async (req, res) => {
     "Amount",
     "Category",
     "PaymentMethod",
+    "CONCAT(FirstName,'',LastName) AS UserName",
   ];
 
-  const extendedTable = `${table} INNER JOIN users ON transactions.UserID=users.UserID`;
-  const extendedFields = `${fields}, CONCAT(FirstName," ",LastName) AS UserName`;
-  let sql = `SELECT ${extendedFields} FROM ${extendedTable}`;
-  if (id) sql += ` WHERE ${idField} = '${id}'`;
-
-  // Execute query
-  let isSuccess = false;
-  let message = "";
-  let result = null;
-  try {
-    [result] = await database.query(sql);
-    if (result.length === 0) message = "No record(s) found.";
-    else {
-      isSuccess = true;
-      message = "Record(s) successfully recovered.";
-    }
-  } catch (error) {
-    message = `Failed to execute query: ${error.message}`;
+  switch (variant) {
+    case "user":
+      sql = `SELECT ${fields} FROM ${table} WHERE transactions.UserID = '${id}'`;
+      break;
+    default:
+      sql = `SELECT ${fields} FROM ${table} `;
+      if (id) sql += ` WHERE TransactionID = '${id}'`;
   }
-  // Responses
-
-  isSuccess ? res.status(200).json(result) : res.status(400).json({ message });
+  return sql;
 };
 
-const transactionsOfStudentController = async (req, res) => {
+const getTransactionsController = async (req, res, variant) => {
   const id = req.params.id;
-  //BUILD SQL
+  const sql = buildModulesSelectSQL(id, variant);
 
-  const table = "transactions";
-  const whereField = "transactions.UserID";
-  const fields = [
-    "TransactionID",
-    "Name",
-    "Date",
-    "Amount",
-    "Category",
-    "PaymentMethod",
-  ];
-  const extendedTable = `${table} INNER JOIN users ON transactions.UserID=users.UserID`;
-  const extendedFields = `${fields}, CONCAT(FirstName," ",LastName) AS UserName`;
-  const sql = `SELECT ${extendedFields} FROM ${extendedTable} WHERE ${whereField} = '${id}'`;
+  const { isSuccess, result, message } = await read(sql);
+  if (!isSuccess) return res.status(404).json({ message });
 
-  // Execute query
-  let isSuccess = false;
-  let message = "";
-  let result = null;
-  try {
-    [result] = await database.query(sql);
-    if (result.length === 0) message = "No record(s) found.";
-    else {
-      isSuccess = true;
-      message = "Record(s) successfully recovered.";
-    }
-  } catch (error) {
-    message = `Failed to execute query: ${error.message}`;
-  }
-  // Responses
-
-  isSuccess ? res.status(200).json(result) : res.status(400).json({ message });
+  res.status(200).json(result);
 };
 
-//  Endpoints ------------------------------
-app.get("/api/transactions", transactionsController);
-app.get("/api/:id/transactions", transactionsController);
-app.get("/api/transactions/users/:id", transactionsOfStudentController);
+app.get("/api/transactions", (req, res) =>
+  getTransactionsController(req, res, null)
+);
+app.get("/api/:id/transactions", (req, res) =>
+  getTransactionsController(req, res, null)
+);
+app.get("/api/transactions/users/:id", (req, res) =>
+  getTransactionsController(req, res, "user")
+);
 
 //  Start server ---------------------------
 const PORT = process.env.PORT || 5001;
