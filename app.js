@@ -36,9 +36,16 @@ const read = async (selectSql) => {
   }
 };
 
-const create = async (sql) => {
+const buildSetFields = (fields) =>
+  fields.reduce(
+    (setSQL, field, index) =>
+      setSQL + `${field}=:${field}` + (index === fields.length - 1 ? "" : ","),
+    "SET"
+  );
+
+const createTransactions = async (sql, record) => {
   try {
-    const status = await database.query(sql);
+    const status = await database.query(sql, record);
     const recoverRecordSql = buildTransactionsSelectSQL(
       status[0].insertId,
       null
@@ -64,12 +71,7 @@ const create = async (sql) => {
 const buildTransactionsInsertSQL = (record) => {
   let table = "transactions";
   let mutablefields = ["Name", "Date", "Amount", "Category", "PaymentMethod"];
-  return `INSERT INTO ${table} SET 
-  Name="${record["Name"]}",
-  Date="${record["Date"]}",
-  Amount=${record["Amount"]},
-  Category="${record["Category"]}",
-  PaymentMethod="${record["PaymentMethod"]}"`;
+  return `INSERT INTO ${table}` + buildSetFields(mutableFields);
 };
 
 const buildTransactionsSelectSQL = (id, variant) => {
@@ -107,7 +109,11 @@ const getTransactionsController = async (res, id, variant) => {
 
 const postTransactionsController = async (req, res) => {
   const sql = buildTransactionsInsertSQL(req.body);
-  const { isSuccess, result, message: accessorMessage } = await create(sql);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await createTransactions(sql, req.body);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   res.status(201).json(result);
