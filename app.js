@@ -2,6 +2,8 @@
 import express from "express";
 import database from "./database.js";
 import cors from "cors";
+import { v4 as uuidv4 } from "uuid";
+
 //  Configure express app ------------------
 const app = new express();
 
@@ -69,9 +71,22 @@ const createTransactions = async (sql, record) => {
 };
 
 const buildTransactionsInsertSQL = (record) => {
-  let table = "transactions";
-  let mutablefields = ["Name", "Date", "Amount", "Category", "PaymentMethod"];
-  return `INSERT INTO ${table}` + buildSetFields(mutableFields);
+  const table = "transactions";
+  const mutableFields = [
+    "TransactionID",
+    "Name",
+    "Date",
+    "Amount",
+    "Category",
+    "PaymentMethod",
+    "UserID",
+  ];
+
+  const keys = mutableFields.filter((f) => record[f] !== undefined);
+  const columns = keys.join(", ");
+  const params = keys.map((f) => `:${f}`).join(", ");
+
+  return `INSERT INTO ${table} (${columns}) VALUES (${params})`;
 };
 
 const buildTransactionsSelectSQL = (id, variant) => {
@@ -85,7 +100,7 @@ const buildTransactionsSelectSQL = (id, variant) => {
     "Amount",
     "Category",
     "PaymentMethod",
-    "CONCAT(FirstName,'',LastName) AS UserName",
+    "CONCAT(FirstName,' ',LastName) AS UserName",
   ];
 
   switch (variant) {
@@ -108,12 +123,14 @@ const getTransactionsController = async (res, id, variant) => {
 };
 
 const postTransactionsController = async (req, res) => {
-  const sql = buildTransactionsInsertSQL(req.body);
+  const transactionId = uuidv4();
+  const record = { TransactionID: transactionId, ...req.body };
+  const sql = buildTransactionsInsertSQL(record);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await createTransactions(sql, req.body);
+  } = await createTransactions(sql, record);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
 
   res.status(201).json(result);
