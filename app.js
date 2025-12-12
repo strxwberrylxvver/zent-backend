@@ -70,10 +70,32 @@ const createTransactions = async (sql, record) => {
   }
 };
 
-const buildTransactionsInsertSQL = (record) => {
+const modifyTransactions = async (sql, id, record) => {
+  try {
+    const status = await database.query(sql, { ...record, TransactionID: id });
+    const recoverRecordSql = buildTransactionsSelectSQL(id, null);
+    const { isSuccess, result, message } = await read(recoverRecordSql);
+
+    return isSuccess
+      ? { isSuccess: true, result, message: "Record successfully recovered." }
+      : {
+          isSuccess: false,
+          result: null,
+          message: `Failed to recover inserted record : ${message}`,
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+
+const buildTransactionsModifySQL = (id, record) => {
   const table = "transactions";
+
   const mutableFields = [
-    "TransactionID",
     "Name",
     "Date",
     "Amount",
@@ -83,10 +105,9 @@ const buildTransactionsInsertSQL = (record) => {
   ];
 
   const keys = mutableFields.filter((f) => record[f] !== undefined);
-  const columns = keys.join(", ");
-  const params = keys.map((f) => `:${f}`).join(", ");
+  const setClause = keys.map((f) => `${f} = :${f}`).join(", ");
 
-  return `INSERT INTO ${table} (${columns}) VALUES (${params})`;
+  return `UPDATE ${table} SET ${setClause} WHERE TransactionID = :TransactionID`;
 };
 
 const buildTransactionsSelectSQL = (id, variant) => {
@@ -132,8 +153,22 @@ const postTransactionsController = async (req, res) => {
     message: accessorMessage,
   } = await createTransactions(sql, record);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
-
   res.status(201).json(result);
+};
+
+const putTransactionsController = async (req, res) => {
+  const id = req.params.id;
+  const record = { ...req.body, TransactionID: id };
+
+  const sql = buildTransactionsModifySQL(id, record);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await modifyTransactions(sql, id, record);
+
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+  res.status(200).json(result);
 };
 
 app.get("/api/transactions", (req, res) =>
@@ -147,6 +182,7 @@ app.get("/api/transactions/users/:id", (req, res) =>
 );
 
 app.post("/api/transactions", postTransactionsController);
+app.put("/api/transactions/:id", putTransactionsController);
 
 //  Start server ---------------------------
 const PORT = process.env.PORT || 5001;
