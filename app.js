@@ -92,6 +92,31 @@ const modifyTransactions = async (sql, id, record) => {
   }
 };
 
+const deleteTransactions = async (sql, id) => {
+  try {
+    const status = await database.query(sql, { TransactionID: id });
+
+    return status[0].affectedRows === 0
+      ? {
+          isSuccess: false,
+          result: null,
+          message: `Failed to delete record : Record not found.`,
+        }
+      : {
+          isSuccess: true,
+          result: null,
+          message: "Record successfully removed.",
+        };
+  } catch (error) {
+    return {
+      isSuccess: false,
+      result: null,
+      message: `Failed to execute query: ${error.message}`,
+    };
+  }
+};
+
+
 const buildTransactionsModifySQL = (id, record) => {
   const table = "transactions";
 
@@ -108,6 +133,10 @@ const buildTransactionsModifySQL = (id, record) => {
   const setClause = keys.map((f) => `${f} = :${f}`).join(", ");
 
   return `UPDATE ${table} SET ${setClause} WHERE TransactionID = :TransactionID`;
+};
+
+const buildTransactionsDeleteSQL = () => {
+  return `DELETE FROM transactions WHERE TransactionID = :TransactionID`;
 };
 
 const buildTransactionsSelectSQL = (id, variant) => {
@@ -171,6 +200,20 @@ const putTransactionsController = async (req, res) => {
   res.status(200).json(result);
 };
 
+const deleteTransactionsController = async (req, res) => {
+  const id = req.params.id;
+
+  const sql = buildTransactionsDeleteSQL();
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await deleteTransactions(sql, id);
+
+  if (!isSuccess) return res.status(404).json({ message: accessorMessage });
+  res.status(200).json(result);
+};
+
 app.get("/api/transactions", (req, res) =>
   getTransactionsController(res, null, null)
 );
@@ -183,6 +226,7 @@ app.get("/api/transactions/users/:id", (req, res) =>
 
 app.post("/api/transactions", postTransactionsController);
 app.put("/api/transactions/:id", putTransactionsController);
+app.delete("/api/transactions/:id", deleteTransactionsController);
 
 //  Start server ---------------------------
 const PORT = process.env.PORT || 5001;
