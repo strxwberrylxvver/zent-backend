@@ -135,6 +135,23 @@ const buildTransactionsModifySQL = (id, record) => {
   return `UPDATE ${table} SET ${setClause} WHERE TransactionID = :TransactionID`;
 };
 
+const buildTransactionsInsertSQL = (record) => {
+  const table = "transactions";
+  const fields = [
+    "TransactionID",
+    "Name",
+    "Date",
+    "Amount",
+    "Category",
+    "PaymentMethod",
+    "UserID",
+  ];
+
+  const columns = fields.join(", ");
+  const placeholders = fields.map((f) => `:${f}`).join(", ");
+
+  return `INSERT INTO ${table} (${columns}) VALUES (${placeholders})`;
+};
 const buildTransactionsDeleteSQL = () => {
   return `DELETE FROM transactions WHERE TransactionID = :TransactionID`;
 };
