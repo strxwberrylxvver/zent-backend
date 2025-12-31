@@ -1,13 +1,10 @@
-//  Imports --------------------------------
 import express from "express";
 import database from "./database.js";
 import cors from "cors";
 import { v4 as uuidv4 } from "uuid";
 
-//  Configure express app ------------------
 const app = new express();
 
-//  Configure middleware -------------------
 app.use(
   cors({
     origin: "http://localhost:3000",
@@ -18,22 +15,14 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-//  Controllers ----------------------------
-const read = async (selectSql) => {
+const read = async (sql, id) => {
   try {
-    const [result] = await database.query(selectSql);
+    const [result] = await database.query(sql, {ID:id});
     return result.length === 0
       ? { isSuccess: false, result: null, message: "No record(s) found." }
-      : {
-          isSuccess: true,
-          result,
-          message: "Record(s) successfully recovered.",
-        };
+      : { isSuccess: true, result, message: "Record(s) successfully recovered.", };
   } catch (error) {
-    return {
-      isSuccess: false,
-      result: null,
-      message: `Failed to execute query: ${error.message}`,
+    return { isSuccess: false, result: null, message: `Failed to execute query: ${error.message}`,
     };
   }
 };
@@ -116,8 +105,7 @@ const deleteTransactions = async (sql, id) => {
   }
 };
 
-
-const buildTransactionsModifySQL = (id, record) => {
+const buildTransactionsModifySQL = (record) => {
   const table = "transactions";
 
   const mutableFields = [
@@ -135,7 +123,7 @@ const buildTransactionsModifySQL = (id, record) => {
   return `UPDATE ${table} SET ${setClause} WHERE TransactionID = :TransactionID`;
 };
 
-const buildTransactionsInsertSQL = (record) => {
+const buildTransactionsInsertSQL = () => {
   const table = "transactions";
   const fields = [
     "TransactionID",
@@ -172,27 +160,31 @@ const buildTransactionsSelectSQL = (id, variant) => {
 
   switch (variant) {
     case "user":
-      sql = `SELECT ${fields} FROM ${table} WHERE transactions.UserID = '${id}'`;
+      sql = `SELECT ${fields} FROM ${table} WHERE transactions.UserID = :ID`;
       break;
     default:
       sql = `SELECT ${fields} FROM ${table} `;
-      if (id) sql += ` WHERE TransactionID = '${id}'`;
+      if (id) sql += ` WHERE TransactionID = :ID`;
   }
   return sql;
 };
 
-const getTransactionsController = async (res, id, variant) => {
+const getTransactionsController = async (req, res, variant) => {
+  const id = req.params.id;
   const sql = buildTransactionsSelectSQL(id, variant);
-  const { isSuccess, result, message: accessorMessage } = await read(sql);
+  const { isSuccess, result, message: accessorMessage } = await read(sql, id);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   res.status(200).json(result);
 };
 
 const postTransactionsController = async (req, res) => {
-  const transactionId = uuidv4();
-  const record = { TransactionID: transactionId, ...req.body };
-  const sql = buildTransactionsInsertSQL(record);
+  const record = req.body;
+
+  // const record = { TransactionID: id, ...req.body };
+  // const transactionId = uuidv4();
+  // const record = { TransactionID: transactionId, ...req.body };
+  const sql = buildTransactionsInsertSQL();
   const {
     isSuccess,
     result,
@@ -204,7 +196,7 @@ const postTransactionsController = async (req, res) => {
 
 const putTransactionsController = async (req, res) => {
   const id = req.params.id;
-  const record = { ...req.body, TransactionID: id };
+  const record = req.body;
 
   const sql = buildTransactionsModifySQL(id, record);
   const {
@@ -232,13 +224,13 @@ const deleteTransactionsController = async (req, res) => {
 };
 
 app.get("/api/transactions", (req, res) =>
-  getTransactionsController(res, null, null)
+  getTransactionsController(req, res, null)
 );
 app.get("/api/transactions/:id", (req, res) =>
-  getTransactionsController(res, req.params.id, null)
+  getTransactionsController(req, res, null)
 );
 app.get("/api/transactions/users/:id", (req, res) =>
-  getTransactionsController(res, req.params.id, "user")
+  getTransactionsController(req, res, "user")
 );
 
 app.post("/api/transactions", postTransactionsController);
