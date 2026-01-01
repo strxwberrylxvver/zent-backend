@@ -1,7 +1,19 @@
 import { Router } from "express";
 import database from "../database.js";
+import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
+
+const formatRecordForDatabase = (record) => {
+  const formattedRecord = { ...record };
+  if (formattedRecord.Date) {
+    formattedRecord.Date = new Date(formattedRecord.Date)
+      .toISOString()
+      .split("T")[0];
+  }
+
+  return formattedRecord;
+};
 
 const read = async (query) => {
   try {
@@ -116,10 +128,12 @@ const buildTransactionsReadQuery = (id, variant) => {
 
   switch (variant) {
     case "user":
-      sql = `SELECT ${fields} FROM ${table} WHERE transactions.UserID = :ID`;
+      sql = `SELECT ${fields.join(
+        ","
+      )} FROM ${table} WHERE transactions.UserID = :ID`;
       break;
     default:
-      sql = `SELECT ${fields} FROM ${table} `;
+      sql = `SELECT ${fields.join(",")} FROM ${table} `;
       if (id) sql += ` WHERE TransactionID = :ID`;
   }
   return { sql, data: { ID: id } };
@@ -140,7 +154,7 @@ const buildTransactionsCreateQuery = (record) => {
   const columns = fields.join(", ");
   const placeholders = fields.map((f) => `:${f}`).join(", ");
   const sql = `INSERT INTO ${table} (${columns}) VALUES (${placeholders})`;
-  return { sql, data: record };
+  return { sql, data: formatRecordForDatabase(record) };
 };
 
 const buildTransactionsUpdateQuery = (record, id) => {
@@ -154,11 +168,11 @@ const buildTransactionsUpdateQuery = (record, id) => {
     "PaymentMethod",
     "UserID",
   ];
-
+  const formattedRecord = formatRecordForDatabase(record);
   const keys = mutableFields.filter((f) => record[f] !== undefined);
   const setClause = keys.map((f) => `${f} = :${f}`).join(", ");
   const sql = `UPDATE ${table} SET ${setClause} WHERE TransactionID = :TransactionID`;
-  return { sql, data: { ...record, TransactionID: id } };
+  return { sql, data: { ...formattedRecord, TransactionID: id } };
 };
 
 const buildTransactionsDeleteQuery = (id) => {
@@ -177,6 +191,7 @@ const getTransactionsController = async (req, res, variant) => {
 
 const postTransactionsController = async (req, res) => {
   const record = req.body;
+  record.TransactionID = uuidv4();
   const query = buildTransactionsCreateQuery(record);
   const {
     isSuccess,
@@ -216,14 +231,14 @@ const deleteTransactionsController = async (req, res) => {
   res.status(200).json(result);
 };
 
-router.get("/", (req, res) => getTransactionsController(req, res, null));
-router.get("/:id", (req, res) => getTransactionsController(req, res, null));
 router.get("/users/:id", (req, res) =>
   getTransactionsController(req, res, "user")
 );
+router.get("/:id", (req, res) => getTransactionsController(req, res, null));
+router.get("/", (req, res) => getTransactionsController(req, res, null));
 
 router.post("/", postTransactionsController);
 router.put("/:id", putTransactionsController);
 router.delete("/:id", deleteTransactionsController);
 
-export default Router;
+export default router;
