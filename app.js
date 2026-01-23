@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import transactionsRouter from "./routers/transactions-router.js";
+import goalsRouter from "./routers/goals-router.js";
 
 const app = new express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/transactions", transactionsRouter);
+app.use("/api/savingsgoals", goalsRouter);
 
 //  Start server ---------------------------
 const PORT = process.env.PORT || 5001;
