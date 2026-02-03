@@ -35,7 +35,7 @@ const read = async (id, variant) => {
   }
 };
 
-const create = async (createQuery) => {
+const create = async (record) => {
   try {
     const { sql, data } = buildTransactionsCreateQuery(record);
     const status = await database.query(sql, data);
@@ -82,7 +82,7 @@ const update = async (record, id) => {
 
 const delet3 = async (id) => {
   try {
-    const {sql, data} = buildTransactionsDeleteQuery(id);
+    const { sql, data } = buildTransactionsDeleteQuery(id);
     const status = await database.query(sql, data);
 
     return status[0].affectedRows === 0
@@ -175,7 +175,11 @@ const buildTransactionsDeleteQuery = (id) => {
 
 const getTransactionsController = async (req, res, variant) => {
   const id = req.params.id;
-  const { isSuccess, result, message: accessorMessage } = await read(query);
+  const {
+    isSuccess,
+    result,
+    message: accessorMessage,
+  } = await read(id, variant);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
   res.status(200).json(result);
@@ -204,11 +208,7 @@ const putTransactionsController = async (req, res) => {
 
 const deleteTransactionsController = async (req, res) => {
   const id = req.params.id;
-  const {
-    isSuccess,
-    result,
-    message: accessorMessage,
-  } = await delet3(id);
+  const { isSuccess, result, message: accessorMessage } = await delet3(id);
 
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
   res.status(200).json(result);
