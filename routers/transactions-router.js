@@ -15,9 +15,10 @@ const formatRecordForDatabase = (record) => {
   return formattedRecord;
 };
 
-const read = async (query) => {
+const read = async (id, variant) => {
   try {
-    const [result] = await database.query(query.sql, query.data);
+    const { sql, data } = buildTransactionsReadQuery(id, variant);
+    const [result] = await database.query(sql, data);
     return result.length === 0
       ? { isSuccess: false, result: null, message: "No record(s) found." }
       : {
@@ -34,18 +35,11 @@ const read = async (query) => {
   }
 };
 
-const buildSetFields = (fields) =>
-  fields.reduce(
-    (setSQL, field, index) =>
-      setSQL + `${field}=:${field}` + (index === fields.length - 1 ? "" : ","),
-    "SET"
-  );
-
-const createTransactions = async (createQuery) => {
+const create = async (createQuery) => {
   try {
-    const status = await database.query(createQuery.sql, createQuery.data);
-    const readQuery = buildTransactionsReadQuery(status[0].insertId, null);
-    const { isSuccess, result, message } = await read(readQuery);
+    const { sql, data } = buildTransactionsCreateQuery(record);
+    const status = await database.query(sql, data);
+    const { isSuccess, result, message } = await read(status[0].insertId, null);
 
     return isSuccess
       ? { isSuccess: true, result, message: "Record successfully recovered." }
@@ -63,14 +57,12 @@ const createTransactions = async (createQuery) => {
   }
 };
 
-const updateTransactions = async (updateQuery) => {
+const update = async (record, id) => {
   try {
-    const status = await database.query(updateQuery.sql, updateQuery.data);
-    const readQuery = buildTransactionsReadQuery(
-      updateQuery.data.TransactionID,
-      null
-    );
-    const { isSuccess, result, message } = await read(readQuery);
+    const { sql, data } = buildTransactionsUpdateQuery(record, id);
+    const status = await database.query(sql, data);
+
+    const { isSuccess, result, message } = await read(id, null);
 
     return isSuccess
       ? { isSuccess: true, result, message: "Record successfully recovered." }
@@ -88,9 +80,10 @@ const updateTransactions = async (updateQuery) => {
   }
 };
 
-const deleteTransactions = async (deleteQuery) => {
+const delet3 = async (id) => {
   try {
-    const status = await database.query(deleteQuery.sql, deleteQuery.data);
+    const {sql, data} = buildTransactionsDeleteQuery(id);
+    const status = await database.query(sql, data);
 
     return status[0].affectedRows === 0
       ? {
@@ -182,7 +175,6 @@ const buildTransactionsDeleteQuery = (id) => {
 
 const getTransactionsController = async (req, res, variant) => {
   const id = req.params.id;
-  const query = buildTransactionsReadQuery(id, variant);
   const { isSuccess, result, message: accessorMessage } = await read(query);
   if (!isSuccess) return res.status(400).json({ message: accessorMessage });
 
@@ -192,12 +184,7 @@ const getTransactionsController = async (req, res, variant) => {
 const postTransactionsController = async (req, res) => {
   const record = req.body;
   record.TransactionID = uuidv4();
-  const query = buildTransactionsCreateQuery(record);
-  const {
-    isSuccess,
-    result,
-    message: accessorMessage,
-  } = await createTransactions(query);
+  const { isSuccess, result, message: accessorMessage } = await create(record);
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
   res.status(201).json(result);
 };
@@ -205,13 +192,11 @@ const postTransactionsController = async (req, res) => {
 const putTransactionsController = async (req, res) => {
   const id = req.params.id;
   const record = req.body;
-
-  const query = buildTransactionsUpdateQuery(record, id);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await updateTransactions(query);
+  } = await update(record, id);
 
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
   res.status(200).json(result);
@@ -219,13 +204,11 @@ const putTransactionsController = async (req, res) => {
 
 const deleteTransactionsController = async (req, res) => {
   const id = req.params.id;
-
-  const query = buildTransactionsDeleteQuery(id);
   const {
     isSuccess,
     result,
     message: accessorMessage,
-  } = await deleteTransactions(query);
+  } = await delet3(id);
 
   if (!isSuccess) return res.status(404).json({ message: accessorMessage });
   res.status(200).json(result);
