@@ -12,7 +12,7 @@ const accessor = new Accessor(model, database);
 const controller = new Controller(accessor);
 
 router.get("/users/:id", (req, res) =>
-  getTransactionsController(req, res, "user")
+  controller.get(req, res, "user")
 );
 router.get("/:id", (req, res) => controller.get(req, res, null));
 router.get("/", (req, res) => controller.get(req, res, null));
