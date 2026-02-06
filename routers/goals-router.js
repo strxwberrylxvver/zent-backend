@@ -34,13 +34,6 @@ const read = async (query) => {
   }
 };
 
-const buildSetFields = (fields) =>
-  fields.reduce(
-    (setSQL, field, index) =>
-      setSQL + `${field}=:${field}` + (index === fields.length - 1 ? "" : ","),
-    "SET"
-  );
-
 const createGoals = async (createQuery) => {
   try {
     const status = await database.query(createQuery.sql, createQuery.data);
