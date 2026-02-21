@@ -225,6 +225,6 @@ router.get("/", (req, res) => getBudgetsController(req, res, null));
 
 router.post("/", postBudgetsController);
 router.put("/:id", putBudgetsController);
-router.delete("/:id", deleteGBudgetsController);
+router.delete("/:id", deleteBudgetsController);
 
 export default router;
