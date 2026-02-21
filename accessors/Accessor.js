@@ -6,7 +6,7 @@ class Accessor {
 
   read = async (id, variant) => {
     try {
-      const { sql, data } = model.buildReadQuery(id, variant);
+      const { sql, data } = this.model.buildReadQuery(id, variant);
       const [result] = await this.database.query(sql, data);
       return result.length === 0
         ? { isSuccess: false, result: null, message: "No record(s) found." }
