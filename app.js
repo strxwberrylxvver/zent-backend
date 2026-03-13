@@ -1,11 +1,10 @@
 import express from "express";
 import cors from "cors";
-import transactionsRouter from "./routers/transactions-router.js";
-import goalsRouter from "./routers/goals-router.js";
-import budgetsRouter from "./routers/budgets-router.js";
+import transactionsConfig from "./models/transactions-model.js";
+import goalsConfig from "./models/goals-model.js";
+import budgetsConfig from "./models/budgets-model.js";
 
-
-const app = new express();
+const app = express();
 
 app.use(
   cors({
@@ -17,11 +16,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/transactions", transactionsRouter);
-app.use("/api/savingsgoals", goalsRouter);
-app.use("/api/budgets", budgetsRouter);
+app.use("/api/transactions", createRouter(transactionsConfig));
+app.use("/api/savingsgoals", createRouter(goalsConfig));
+app.use("/api/budgets", createRouter(budgetsConfig));
 
-
-//  Start server ---------------------------
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

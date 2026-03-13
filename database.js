@@ -16,6 +16,6 @@ try {
   database = await mysql.createConnection(dbConfig);
 } catch (error) {
   console.log("Error creating Database Connection: " + error.message);
-  process.exit;
+  process.exit(1);
 }
 export default database;
