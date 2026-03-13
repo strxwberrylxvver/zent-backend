@@ -27,7 +27,7 @@ class Model {
     );
   buildCreateQuery = (record) => {
     const sql = `INSERT INTO ${this.table}` + this.buildSetFields(this.fields);
-    return { sql, data: formatRecordForDatabase(record) };
+    return { sql, data: this.formatRecordForDatabase(record) };
   };
 
   buildUpdateQuery = (record, id) => {
@@ -37,7 +37,7 @@ class Model {
       `WHERE ${this.idField}=:${this.idField}`;
     return {
       sql,
-      data: { ...formatRecordForDatabase(record), [this.idField]: id },
+      data: { ...this.formatRecordForDatabase(record), [this.idField]: id },
     };
   };
 

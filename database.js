@@ -1,7 +1,5 @@
-//  Imports --------------------------------
 import mysql from "mysql2/promise";
 
-//  Database Connection --------------------
 
 const dbConfig = {
   database: process.env.DB_NAME || "Zent",

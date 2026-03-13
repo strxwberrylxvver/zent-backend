@@ -4,16 +4,13 @@ import Model from "../models/Model.js";
 import modelConfig from "../models/transactions-model.js";
 import Accessor from "../accessors/Accessor.js";
 import Controller from "../controllers/Controller.js";
-import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
 const model = new Model(modelConfig);
 const accessor = new Accessor(model, database);
 const controller = new Controller(accessor);
 
-router.get("/users/:id", (req, res) =>
-  controller.get(req, res, "user")
-);
+router.get("/users/:id", (req, res) => controller.get(req, res, "user"));
 router.get("/:id", (req, res) => controller.get(req, res, null));
 router.get("/", (req, res) => controller.get(req, res, null));
 

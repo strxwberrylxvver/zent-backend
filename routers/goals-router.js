@@ -4,7 +4,6 @@ import Model from "../models/Model.js";
 import modelConfig from "../models/goals-model.js";
 import Accessor from "../accessors/Accessor.js";
 import Controller from "../controllers/Controller.js";
-import { v4 as uuidv4 } from "uuid";
 
 const router = Router();
 const model = new Model(modelConfig);
