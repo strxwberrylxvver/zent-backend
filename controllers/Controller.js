@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from "uuid";
+
 class Controller {
   constructor(accessor) {
     this.accessor = accessor;
