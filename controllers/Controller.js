@@ -5,15 +5,14 @@ class Controller {
     this.accessor = accessor;
   }
 
-  get = async (req, res, variant) => {
-    const id = req.params.id;
+  get = async (req, res, variant, overrideId) => {
+    const id = overrideId || req.params.id;
     const {
       isSuccess,
       result,
       message: accessorMessage,
     } = await this.accessor.read(id, variant);
     if (!isSuccess) return res.status(400).json({ message: accessorMessage });
-
     res.status(200).json(result);
   };
 
