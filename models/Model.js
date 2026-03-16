@@ -13,7 +13,6 @@ class Model {
         .toISOString()
         .split("T")[0];
     }
-
     return formattedRecord;
   };
 
@@ -21,20 +20,21 @@ class Model {
     fields.reduce(
       (setSQL, field, index) =>
         setSQL +
-        `${field} =:${field}` +
+        `${field}=:${field}` +
         (index === fields.length - 1 ? "" : ", "),
       "SET "
     );
+
   buildCreateQuery = (record) => {
-    const sql = `INSERT INTO ${this.table}` + this.buildSetFields(this.fields);
+    const sql = `INSERT INTO ${this.table} ` + this.buildSetFields(this.fields);
     return { sql, data: this.formatRecordForDatabase(record) };
   };
 
   buildUpdateQuery = (record, id) => {
     const sql =
-      `UPDATE ${this.table}` +
+      `UPDATE ${this.table} ` +
       this.buildSetFields(this.fields) +
-      `WHERE ${this.idField}=:${this.idField}`;
+      ` WHERE ${this.idField}=:${this.idField}`;
     return {
       sql,
       data: { ...this.formatRecordForDatabase(record), [this.idField]: id },
