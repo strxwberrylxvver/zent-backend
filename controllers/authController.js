@@ -53,13 +53,20 @@ class AuthController {
     if (!passwordMatch)
       return res.status(401).json({ message: "Invalid email or password." });
 
+
     const token = jwt.sign(
-      { userID: user.UserID, email: user.Email },
+      { userID: user.UserID, email: user.Email, firstName: user.FirstName, userType: user.UserType },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
-
-    res.status(200).json({ token, userID: user.UserID, email: user.Email });
+    
+    res.status(200).json({
+      token,
+      userID: user.UserID,
+      email: user.Email,
+      firstName: user.FirstName,
+      userType: user.UserType,
+    });
   };
 }
 
