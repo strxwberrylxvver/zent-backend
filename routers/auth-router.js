@@ -3,11 +3,11 @@ import database from "../database.js";
 import Model from "../models/Model.js";
 import Accessor from "../accessors/Accessor.js";
 import AuthController from "../controllers/authController.js";
-import usersConfig from "../models/users-model.js";
+import usersModel from "../models/users-model.js";
 
 const authRouter = Router();
 const controller = new AuthController(
-  new Accessor(new Model(usersConfig), database)
+  new Accessor(new Model(usersModel), database)
 );
 
 authRouter.post("/register", controller.register);

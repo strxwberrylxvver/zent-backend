@@ -1,37 +1,29 @@
-const model = {};
-model.table = "savingsgoals";
-model.fields = [
-  "GoalID",
-  "GoalName",
-  "SavedAmount",
-  "TargetAmount",
-  "TargetDate",
-  "savingsgoals.UserID",
-];
+const goalsModel = {
+  table: "savingsgoals",
+  idField: "GoalID",
+  fields: ["GoalID", "GoalName", "SavedAmount", "TargetAmount", "TargetDate", "savingsgoals.UserID"],
 
-model.idField = "GoalID";
+  buildReadQuery(id, variant) {
+    const table = "savingsgoals INNER JOIN users ON savingsgoals.UserID = users.UserID";
+    const fields = [
+      this.idField,
+      ...this.fields,
+      "CONCAT(FirstName,' ',LastName) AS UserName",
+    ].join(", ");
 
-model.buildReadQuery = (id, variant) => {
-  const resolvedTable =
-    "savingsgoals INNER JOIN users ON savingsgoals.UserID=users.UserID";
-  const resolvedfields = [
-    model.idField,
-    ...model.fields,
-    "CONCAT(FirstName,' ',LastName) AS UserName",
-  ];
-  let sql = "";
-
-  switch (variant) {
-    case "user":
-      sql = `SELECT ${resolvedfields.join(
-        ","
-      )} FROM ${resolvedTable} WHERE savingsgoals.UserID = :ID`;
-      break;
-    default:
-      sql = `SELECT ${resolvedfields.join(",")} FROM ${resolvedTable} `;
-      if (id) sql += ` WHERE GoalID = :ID`;
-  }
-  return { sql, data: { ID: id } };
+    switch (variant) {
+      case "user":
+        return {
+          sql: `SELECT ${fields} FROM ${table} WHERE savingsgoals.UserID = :ID`,
+          data: { ID: id },
+        };
+      default:
+        return {
+          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE GoalID = :ID" : ""}`,
+          data: { ID: id },
+        };
+    }
+  },
 };
 
-export default model;
+export default goalsModel;

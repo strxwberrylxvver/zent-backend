@@ -1,49 +1,33 @@
 class Model {
-  constructor(model) {
-    this.table = model.table;
-    this.fields = model.fields;
-    this.idField = model.idField;
-    this.buildReadQuery = model.buildReadQuery;
+  constructor({ table, fields, idField, buildReadQuery }) {
+    this.table = table;
+    this.fields = fields;
+    this.idField = idField;
+    this.buildReadQuery = buildReadQuery;
   }
 
-  formatRecordForDatabase = (record) => {
-    const formattedRecord = { ...record };
-    if (formattedRecord.Date) {
-      formattedRecord.Date = new Date(formattedRecord.Date)
-        .toISOString()
-        .split("T")[0];
-    }
-    return formattedRecord;
+  #formatRecord = (record) => {
+    if (!record.Date) return { ...record };
+    return { ...record, Date: new Date(record.Date).toISOString().split("T")[0] };
   };
 
-  buildSetFields = (fields) =>
-    fields.reduce(
-      (setSQL, field, index) =>
-        setSQL +
-        `${field}=:${field}` +
-        (index === fields.length - 1 ? "" : ", "),
-      "SET "
-    );
+  #buildSetClause = (fields) =>
+    "SET " + fields.map((f) => `${f}=:${f}`).join(", ");
 
-  buildCreateQuery = (record) => {
-    const sql = `INSERT INTO ${this.table} ` + this.buildSetFields(this.fields);
-    return { sql, data: this.formatRecordForDatabase(record) };
-  };
+  buildCreateQuery = (record) => ({
+    sql: `INSERT INTO ${this.table} ${this.#buildSetClause(this.fields)}`,
+    data: this.#formatRecord(record),
+  });
 
-  buildUpdateQuery = (record, id) => {
-    const sql =
-      `UPDATE ${this.table} ` +
-      this.buildSetFields(this.fields) +
-      ` WHERE ${this.idField}=:${this.idField}`;
-    return {
-      sql,
-      data: { ...this.formatRecordForDatabase(record), [this.idField]: id },
-    };
-  };
+  buildUpdateQuery = (record, id) => ({
+    sql: `UPDATE ${this.table} ${this.#buildSetClause(this.fields)} WHERE ${this.idField}=:${this.idField}`,
+    data: { ...this.#formatRecord(record), [this.idField]: id },
+  });
 
-  buildDeleteQuery = (id) => {
-    const sql = `DELETE FROM ${this.table} WHERE ${this.idField}=:${this.idField}`;
-    return { sql, data: { [this.idField]: id } };
-  };
+  buildDeleteQuery = (id) => ({
+    sql: `DELETE FROM ${this.table} WHERE ${this.idField}=:${this.idField}`,
+    data: { [this.idField]: id },
+  });
 }
+
 export default Model;

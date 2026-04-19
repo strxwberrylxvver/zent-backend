@@ -1,38 +1,29 @@
-const model = {};
+const transactionsModel = {
+  table: "transactions",
+  idField: "TransactionID",
+  fields: ["TransactionID", "Name", "Date", "Amount", "Category", "PaymentMethod", "transactions.UserID"],
 
-model.table = "transactions";
-model.fields = [
-  "TransactionID",
-  "Name",
-  "Date",
-  "Amount",
-  "Category",
-  "PaymentMethod",
-  "transactions.UserID",
-];
-model.idField = "TransactionID";
+  buildReadQuery(id, variant) {
+    const table = "transactions INNER JOIN users ON transactions.UserID = users.UserID";
+    const fields = [
+      this.idField,
+      ...this.fields,
+      "CONCAT(FirstName,' ',LastName) AS UserName",
+    ].join(", ");
 
-model.buildReadQuery = (id, variant) => {
-  const resolvedTable =
-    "transactions INNER JOIN users ON transactions.UserID=users.UserID";
-  const resolvedfields = [
-    model.idField,
-    ...model.fields,
-    "CONCAT(FirstName,' ',LastName) AS UserName",
-  ];
-  let sql = "";
-
-  switch (variant) {
-    case "user":
-      sql = `SELECT ${resolvedfields.join(
-        ","
-      )} FROM ${resolvedTable} WHERE transactions.UserID = :ID`;
-      break;
-    default:
-      sql = `SELECT ${resolvedfields.join(",")} FROM ${resolvedTable} `;
-      if (id) sql += ` WHERE TransactionID = :ID`;
-  }
-  return { sql, data: { ID: id } };
+    switch (variant) {
+      case "user":
+        return {
+          sql: `SELECT ${fields} FROM ${table} WHERE transactions.UserID = :ID`,
+          data: { ID: id },
+        };
+      default:
+        return {
+          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE TransactionID = :ID" : ""}`,
+          data: { ID: id },
+        };
+    }
+  },
 };
 
-export default model;
+export default transactionsModel;
