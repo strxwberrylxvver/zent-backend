@@ -1,13 +1,17 @@
 const goalsModel = {
   table: "savingsgoals",
   idField: "GoalID",
-  fields: ["GoalID", "GoalName", "SavedAmount", "TargetAmount", "TargetDate", "savingsgoals.UserID"],
+  fields: ["GoalID", "GoalName", "SavedAmount", "TargetAmount", "TargetDate", "UserID"],
 
   buildReadQuery(id, variant) {
     const table = "savingsgoals INNER JOIN users ON savingsgoals.UserID = users.UserID";
     const fields = [
-      this.idField,
-      ...this.fields,
+      "savingsgoals.GoalID",
+      "savingsgoals.GoalName",
+      "savingsgoals.SavedAmount",
+      "savingsgoals.TargetAmount",
+      "savingsgoals.TargetDate",
+      "savingsgoals.UserID",
       "CONCAT(FirstName,' ',LastName) AS UserName",
     ].join(", ");
 
@@ -19,7 +23,7 @@ const goalsModel = {
         };
       default:
         return {
-          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE GoalID = :ID" : ""}`,
+          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE savingsgoals.GoalID = :ID" : ""}`,
           data: { ID: id },
         };
     }

@@ -1,13 +1,18 @@
 const budgetsModel = {
   table: "budgets",
   idField: "BudgetID",
-  fields: ["BudgetID", "BudgetName", "UsedAmount", "TotalAmount", "BudgetDate", "budgets.UserID", "budgets.CategoryID"],
+  fields: ["BudgetID", "BudgetName", "UsedAmount", "TotalAmount", "BudgetDate", "UserID", "CategoryID"],
 
   buildReadQuery(id, variant) {
     const table = "budgets INNER JOIN users ON budgets.UserID = users.UserID";
     const fields = [
-      this.idField,
-      ...this.fields,
+      "budgets.BudgetID",
+      "budgets.BudgetName",
+      "budgets.UsedAmount",
+      "budgets.TotalAmount",
+      "budgets.BudgetDate",
+      "budgets.UserID",
+      "budgets.CategoryID",
       "CONCAT(FirstName,' ',LastName) AS UserName",
     ].join(", ");
 
@@ -19,7 +24,7 @@ const budgetsModel = {
         };
       default:
         return {
-          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE BudgetID = :ID" : ""}`,
+          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE budgets.BudgetID = :ID" : ""}`,
           data: { ID: id },
         };
     }

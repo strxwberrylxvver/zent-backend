@@ -1,13 +1,20 @@
 const transactionsModel = {
   table: "transactions",
   idField: "TransactionID",
-  fields: ["TransactionID", "Name", "Date", "Amount", "Category", "PaymentMethod", "transactions.UserID"],
+
+  // No table prefix here — these are used in INSERT/UPDATE SET clauses
+  fields: ["TransactionID", "Name", "Date", "Amount", "Category", "PaymentMethod", "UserID"],
 
   buildReadQuery(id, variant) {
     const table = "transactions INNER JOIN users ON transactions.UserID = users.UserID";
     const fields = [
-      this.idField,
-      ...this.fields,
+      "transactions.TransactionID",
+      "transactions.Name",
+      "transactions.Date",
+      "transactions.Amount",
+      "transactions.Category",
+      "transactions.PaymentMethod",
+      "transactions.UserID",
       "CONCAT(FirstName,' ',LastName) AS UserName",
     ].join(", ");
 
@@ -19,7 +26,7 @@ const transactionsModel = {
         };
       default:
         return {
-          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE TransactionID = :ID" : ""}`,
+          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE transactions.TransactionID = :ID" : ""}`,
           data: { ID: id },
         };
     }
