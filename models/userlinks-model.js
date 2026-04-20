@@ -5,19 +5,13 @@ const userLinksModel = {
   
     buildReadQuery(id, variant) {
       switch (variant) {
-        case "byLinker":
+        case "by_linker":
           return {
             sql: `SELECT ul.LinkID, ul.StudentID, ul.LinkType,
-                         u.FirstName, u.LastName, u.Email, u.UserType
+                         u.FirstName, u.LastName, u.Email
                   FROM userlinks ul
                   INNER JOIN users u ON ul.StudentID = u.UserID
                   WHERE ul.LinkedByID = :ID`,
-            data: { ID: id },
-          };
-        case "byStudent":
-          return {
-            sql: `SELECT ul.LinkID, ul.LinkedByID, ul.LinkType
-                  FROM userlinks ul WHERE ul.StudentID = :ID`,
             data: { ID: id },
           };
         default:

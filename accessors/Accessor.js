@@ -11,9 +11,7 @@ class Accessor {
     try {
       const { sql, data } = this.model.buildReadQuery(id, variant);
       const [result] = await this.database.query(sql, data);
-      return result.length === 0
-        ? this.#fail("No record(s) found.")
-        : this.#ok(result);
+      return this.#ok(result);
     } catch (error) {
       return this.#fail(`Failed to execute query: ${error.message}`);
     }
@@ -23,10 +21,11 @@ class Accessor {
     try {
       const { sql, data } = this.model.buildCreateQuery(record);
       const [status] = await this.database.query(sql, data);
-      const read = await this.read(status.insertId, null);
-      return read.isSuccess
+      const idValue = record[this.model.idField];
+      const read = await this.read(idValue, null);
+      return read.isSuccess && read.result.length > 0
         ? this.#ok(read.result)
-        : this.#fail(`Failed to recover inserted record: ${read.message}`);
+        : this.#fail(`Failed to recover inserted record.`);
     } catch (error) {
       return this.#fail(`Failed to execute query: ${error.message}`);
     }
