@@ -1,8 +1,9 @@
 import { v4 as uuidv4 } from "uuid";
 
 class Controller {
-  constructor(accessor) {
+  constructor(accessor, xpController = null) {
     this.accessor = accessor;
+    this.xpController = xpController;
   }
 
   get = async (req, res, variant, overrideId) => {
@@ -19,6 +20,11 @@ class Controller {
 
     const { isSuccess, result, message } = await this.accessor.create(record);
     if (!isSuccess) return res.status(500).json({ message });
+
+    if (this.xpController && req.user?.userID) {
+      await this.xpController.award(req.user.userID, 10).catch(() => {});
+    }
+
     res.status(201).json(result);
   };
 

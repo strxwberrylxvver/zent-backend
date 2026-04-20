@@ -4,10 +4,11 @@ import Model from "../models/Model.js";
 import Accessor from "../accessors/Accessor.js";
 import Controller from "../controllers/Controller.js";
 
-const collectiveRouter = (modelConfig) => {
+const collectiveRouter = (modelConfig, xpController = null) => {
   const router = Router();
   const controller = new Controller(
-    new Accessor(new Model(modelConfig), database)
+    new Accessor(new Model(modelConfig), database),
+    xpController
   );
 
   router.get("/me", (req, res) => controller.get(req, res, "user", req.user?.userID));
