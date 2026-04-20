@@ -1,7 +1,7 @@
 const XP_PER_LEVEL = 100;
 const xpForLevel = (level) => level * XP_PER_LEVEL;
 
-class xpController {
+class XPController {
   constructor(accessor) {
     this.accessor = accessor;
   }
@@ -42,4 +42,4 @@ class xpController {
   };
 }
 
-export default xpController;
+export default XPController;
