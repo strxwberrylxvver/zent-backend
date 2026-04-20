@@ -8,7 +8,16 @@ class Controller {
 
   get = async (req, res, variant, overrideId) => {
     const id = overrideId ?? req.params.id;
-    const { isSuccess, result, message } = await this.accessor.read(id, variant);
+    const filters = variant ? {
+      month:    req.query.month    ?? null,
+      category: req.query.category ?? null,
+      type:     req.query.type     ?? null,
+      search:   req.query.search   ?? null,
+      sort:     req.query.sort     ?? "date",
+      order:    req.query.order    ?? "desc",
+    } : {};
+
+    const { isSuccess, result, message } = await this.accessor.read(id, variant, filters);
     if (!isSuccess) return res.status(500).json({ message });
     if (id && !variant && result.length === 0)
       return res.status(404).json({ message: "Record not found." });

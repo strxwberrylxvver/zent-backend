@@ -4,12 +4,12 @@ class Accessor {
     this.database = database;
   }
 
-  #ok = (result) => ({ isSuccess: true, result, message: "Record(s) successfully recovered." });
+  #ok   = (result)  => ({ isSuccess: true,  result, message: "Record(s) successfully recovered." });
   #fail = (message) => ({ isSuccess: false, result: null, message });
 
-  read = async (id, variant) => {
+  read = async (id, variant, filters = {}) => {
     try {
-      const { sql, data } = this.model.buildReadQuery(id, variant);
+      const { sql, data } = this.model.buildReadQuery(id, variant, filters);
       const [result] = await this.database.query(sql, data);
       return this.#ok(result);
     } catch (error) {
@@ -20,12 +20,12 @@ class Accessor {
   create = async (record) => {
     try {
       const { sql, data } = this.model.buildCreateQuery(record);
-      const [status] = await this.database.query(sql, data);
+      await this.database.query(sql, data);
       const idValue = record[this.model.idField];
       const read = await this.read(idValue, null);
       return read.isSuccess && read.result.length > 0
         ? this.#ok(read.result)
-        : this.#fail(`Failed to recover inserted record.`);
+        : this.#fail("Failed to recover inserted record.");
     } catch (error) {
       return this.#fail(`Failed to execute query: ${error.message}`);
     }

@@ -1,11 +1,9 @@
 const transactionsModel = {
   table: "transactions",
   idField: "TransactionID",
-
-  // No table prefix here — these are used in INSERT/UPDATE SET clauses
   fields: ["TransactionID", "Name", "Date", "Amount", "Category", "PaymentMethod", "UserID"],
 
-  buildReadQuery(id, variant) {
+  buildReadQuery(id, variant, filters = {}) {
     const table = "transactions INNER JOIN users ON transactions.UserID = users.UserID";
     const fields = [
       "transactions.TransactionID",
@@ -18,18 +16,51 @@ const transactionsModel = {
       "CONCAT(FirstName,' ',LastName) AS UserName",
     ].join(", ");
 
-    switch (variant) {
-      case "user":
-        return {
-          sql: `SELECT ${fields} FROM ${table} WHERE transactions.UserID = :ID`,
-          data: { ID: id },
-        };
-      default:
-        return {
-          sql: `SELECT ${fields} FROM ${table}${id ? " WHERE transactions.TransactionID = :ID" : ""}`,
-          data: { ID: id },
-        };
+    if (!variant && id) {
+      return {
+        sql: `SELECT ${fields} FROM ${table} WHERE transactions.TransactionID = :ID`,
+        data: { ID: id },
+      };
     }
+
+    if (variant === "user") {
+      const conditions = ["transactions.UserID = :ID"];
+      const data = { ID: id };
+
+      if (filters.month) {
+        conditions.push("DATE_FORMAT(transactions.Date, '%Y-%m') = :month");
+        data.month = filters.month;
+      }
+      if (filters.category) {
+        conditions.push("transactions.Category = :category");
+        data.category = filters.category;
+      }
+      if (filters.type === "income") {
+        conditions.push("transactions.Amount > 0");
+      } else if (filters.type === "expense") {
+        conditions.push("transactions.Amount < 0");
+      }
+      if (filters.search) {
+        conditions.push("transactions.Name LIKE :search");
+        data.search = `%${filters.search}%`;
+      }
+
+      const where = `WHERE ${conditions.join(" AND ")}`;
+      const sortField = {
+        date:     "transactions.Date",
+        amount:   "transactions.Amount",
+        name:     "transactions.Name",
+        category: "transactions.Category",
+      }[filters.sort] ?? "transactions.Date";
+      const order = filters.order === "asc" ? "ASC" : "DESC";
+
+      return {
+        sql: `SELECT ${fields} FROM ${table} ${where} ORDER BY ${sortField} ${order}`,
+        data,
+      };
+    }
+
+    return { sql: `SELECT ${fields} FROM ${table}`, data: {} };
   },
 };
 
