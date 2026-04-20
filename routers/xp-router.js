@@ -6,11 +6,13 @@ import XPController from "../controllers/XpController.js";
 import xpModel from "../models/xp-model.js";
 
 const xpRouter = Router();
-export const XPController = new XPController(
+
+const xpControllerInstance = new XPController(
   new Accessor(new Model(xpModel), database)
 );
 
-xpRouter.get("/me", XPController.getMyXP);
-xpRouter.post("/award", XPController.awardRoute);
+xpRouter.get("/me", xpControllerInstance.getMyXP);
+xpRouter.post("/award", xpControllerInstance.awardRoute);
 
+export { xpControllerInstance as xpController };
 export default xpRouter;
