@@ -26,10 +26,6 @@ const goalsModel = {
       const conditions = ["savingsgoals.UserID = :ID"];
       const data = { ID: id };
 
-      if (filters.month) {
-        conditions.push("DATE_FORMAT(savingsgoals.TargetDate, '%Y-%m') = :month");
-        data.month = filters.month;
-      }
       if (filters.search) {
         conditions.push("savingsgoals.GoalName LIKE :search");
         data.search = `%${filters.search}%`;
