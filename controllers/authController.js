@@ -17,9 +17,9 @@ class AuthController {
       return res.status(400).json({ message: "First name, email and password are required." });
 
     const existing = await this.accessor.read(email, "email");
-    if (existing.isSuccess)
+    if (existing.isSuccess && existing.result?.length > 0)
       return res.status(409).json({ message: "Email already in use." });
-
+    
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const { isSuccess, message } = await this.accessor.create({
       UserID: uuidv4(),
@@ -41,9 +41,9 @@ class AuthController {
       return res.status(400).json({ message: "Email and password are required." });
 
     const { isSuccess, result } = await this.accessor.read(email, "email");
-    if (!isSuccess)
+    if (!isSuccess || !result || result.length === 0)
       return res.status(401).json({ message: "Invalid email or password." });
-
+    
     const user = result[0];
     const passwordMatch = await bcrypt.compare(password, user.PasswordHash);
     if (!passwordMatch)
