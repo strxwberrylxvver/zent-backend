@@ -1,4 +1,4 @@
-import { goalsSchema as schema } from "../schemas.js";
+import { goalsSchema as schema } from "../validators/schemas.js";
  
 const goalsModel = {
   schema,

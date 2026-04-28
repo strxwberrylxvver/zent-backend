@@ -1,4 +1,4 @@
-import { transactionsSchema as schema } from "../schemas.js";
+import { transactionsSchema as schema } from "../validators/schemas.js";
 
 const transactionsModel = {
   schema,
