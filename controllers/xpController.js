@@ -14,8 +14,8 @@ class XPController {
 
   award = async (userID, amount = 10) => {
     const { isSuccess, result } = await this.accessor.read(userID, null);
-
-    if (!isSuccess) {
+    
+    if (!isSuccess || !result?.length) {
       await this.accessor.create({ UserID: userID, CurrentXP: amount, Level: 1 });
       return;
     }

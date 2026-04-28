@@ -20,7 +20,7 @@ class Model {
   });
 
   buildUpdateQuery = (record, id) => ({
-    sql: `UPDATE ${this.table} ${this.#buildSetClause(this.fields)} WHERE ${this.idField}=:${this.idField}`,
+    sql: `UPDATE ${this.table} ${this.#buildSetClause(Object.keys(record))} WHERE ${this.idField}=:${this.idField}`,
     data: { ...this.#formatRecord(record), [this.idField]: id },
   });
 

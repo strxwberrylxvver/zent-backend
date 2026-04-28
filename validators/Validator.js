@@ -1,7 +1,7 @@
 import joi from "joi";
 
 class Validator {
-  idSchema = joi.number().integer().min(1);
+  idSchema = joi.string().uuid();
 
   constructor(schema) {
     this.getSchema = joi.object({
@@ -11,7 +11,7 @@ class Validator {
     this.postSchema = schema.recordSchema.and(...schema.mutableFields);
 
     this.putSchema = joi.object({
-      id:     this.idSchema.required(),
+      id: this.idSchema.required(),
       record: schema.recordSchema.or(...schema.mutableFields),
     });
 
@@ -20,16 +20,14 @@ class Validator {
     });
   }
 
-
   #reportErrors = (error) => error.details.map((d) => d.message);
 
   #validate = (schema, value) => {
     const { error } = schema.validate(value, { abortEarly: false });
     return error
       ? { isValid: false, messages: this.#reportErrors(error) }
-      : { isValid: true,  messages: null };
+      : { isValid: true, messages: null };
   };
-
 
   get = (value) => this.#validate(this.getSchema, value);
 
@@ -38,22 +36,22 @@ class Validator {
   put = (id, record) => this.#validate(this.putSchema, { id, record });
 
   delete = (value) => this.#validate(this.deleteSchema, value);
-  
+
   middleware = (method) => (req, res, next) => {
     let result;
 
     switch (method) {
       case "get":
-        result = this.get({ id: req.params.id ? Number(req.params.id) : undefined });
+        result = this.get({ id: req.params.id });
         break;
       case "post":
         result = this.post(req.body);
         break;
       case "put":
-        result = this.put(Number(req.params.id), req.body);
+        result = this.put(req.params.id, req.body);
         break;
       case "delete":
-        result = this.delete({ id: Number(req.params.id) });
+        result = this.delete({ id: req.params.id });
         break;
       default:
         return next();
