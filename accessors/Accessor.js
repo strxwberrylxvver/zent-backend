@@ -20,17 +20,22 @@ class Accessor {
   create = async (record) => {
     try {
       const { sql, data } = this.model.buildCreateQuery(record);
-      await this.database.query(sql, data);
+      console.log("CREATE SQL:", sql);
+      console.log("CREATE DATA:", JSON.stringify(data, null, 2));
+      const [insertResult] = await this.database.query(sql, data);
+      console.log("INSERT RESULT:", insertResult);
       const idValue = record[this.model.idField];
+      console.log("READING BACK WITH ID:", idValue);
       const read = await this.read(idValue, null);
-      return read.isSuccess && read.result.length > 0
+      console.log("READ BACK:", JSON.stringify(read, null, 2));
+      return read.isSuccess
         ? this.#ok(read.result)
         : this.#fail("Failed to recover inserted record.");
     } catch (error) {
+      console.log("CREATE ERROR:", error.message);
       return this.#fail(`Failed to execute query: ${error.message}`);
     }
   };
-
   update = async (record, id) => {
     try {
       const { sql, data } = this.model.buildUpdateQuery(record, id);

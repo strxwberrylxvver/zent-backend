@@ -8,11 +8,26 @@ class Validator {
       id: this.idSchema.optional(),
     });
 
-    this.postSchema = schema.recordSchema.and(...schema.mutableFields);
+    this.postSchema = schema.recordSchema;
+
+    const mutableSchema = joi
+      .object(
+        Object.fromEntries(
+          schema.mutableFields.map((field) => {
+            try {
+              return [field, schema.recordSchema.extract(field).optional()];
+            } catch {
+              return [field, joi.any().optional()];
+            }
+          })
+        )
+      )
+      .or(...schema.mutableFields)
+      .unknown(true);
 
     this.putSchema = joi.object({
       id: this.idSchema.required(),
-      record: schema.recordSchema.or(...schema.mutableFields),
+      record: mutableSchema,
     });
 
     this.deleteSchema = joi.object({
