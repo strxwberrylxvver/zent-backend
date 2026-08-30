@@ -29,6 +29,3 @@ The application follows a modular architecture with separate:
 - Middleware
 - Validators
 
-## Getting Started
-
-[Installation instructions]
